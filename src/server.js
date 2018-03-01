@@ -5,7 +5,9 @@ const app = express();
 const watson = require('watson-developer-cloud');
 const vcapServices = require('vcap_services');
 const cors = require('cors');
+const ToneAnalyzerV3 = require('watson-developer-cloud/tone-analyzer/v3');
 
+/****************************************************************/
 
 // on bluemix, enable rate-limiting and force https
 if (process.env.VCAP_SERVICES) {
@@ -27,6 +29,8 @@ app.use(cors());
 
 
 //********* Speech To Text ********************/
+
+//Autheneticate user
 var sttAuthService = new watson.AuthorizationV1(
   Object.assign(
     {
@@ -36,6 +40,8 @@ var sttAuthService = new watson.AuthorizationV1(
     vcapServices.getCredentials('speech_to_text') // pulls credentials from environment in bluemix, otherwise returns {}
   )
 );
+
+//entry point for requesting token
 app.use('/api/speech-to-text/token', function(req, res) {
   sttAuthService.getToken(
     {
@@ -47,7 +53,7 @@ app.use('/api/speech-to-text/token', function(req, res) {
         res.status(500).send('Error retrieving token');
         return;
       }
-      console.log('token from server.js is ', token);
+      // console.log('token from server.js is ', token);
       res.send(token);
     }
   );
@@ -56,7 +62,7 @@ app.use('/api/speech-to-text/token', function(req, res) {
 
 /************* Tone analysis *****************/
 
-var ToneAnalyzerV3 = require('watson-developer-cloud/tone-analyzer/v3');
+//Authenticate User
 var tone_analyzer = new ToneAnalyzerV3({
   username: config.TONE_USER_NAME,
   password: config.TONE_PASSWORD,
@@ -65,10 +71,15 @@ var tone_analyzer = new ToneAnalyzerV3({
 });
 
 
+/**
+ * Entry point for tone analyzer
+ * Takes the speech-to-text result as a paramater
+ */
 app.use('/api/tone/:text', function(req,res){
     
     console.log('\x1b[36m', "Text recieved :" + req.params.text, '\x1b[0m');
 
+    //Analyse the tone
     tone_analyzer.tone(
       {
         tone_input: req.params.text,
@@ -85,8 +96,7 @@ app.use('/api/tone/:text', function(req,res){
     );
 })
 
-/******************************** */
-
+/****************************************************************/
 const port = process.env.PORT || process.env.VCAP_APP_PORT || 3002;
 app.listen(port, function() {
   console.log('Example IBM Watson Tone Aanalysis JS SDK client app & token server live at http://localhost:%s/', port);

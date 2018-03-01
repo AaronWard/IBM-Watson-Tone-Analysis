@@ -1,17 +1,7 @@
 import React, { Component } from 'react';
 import logo from './logo.svg';
 import './App.css';
-// import config from './config.js';
 import recognizeMic from 'watson-speech/speech-to-text/recognize-microphone';
-// var ToneAnalyzerV3 = require('watson-developer-cloud/tone-analyzer/v3');
-
-  // var tone_analyzer = new ToneAnalyzerV3({
-  //   username: config.TONE_USER_NAME,
-  //   password: config.TONE_PASSWORD,
-  //   version_date: '2017-09-21',
-  //   url: 'https://gateway.watsonplatform.net/tone-analyzer/api/'
-  // });
-
 
   
 class App extends Component {
@@ -19,23 +9,18 @@ class App extends Component {
     super();
     this.state = {};
   }
+
+  /**
+   * Listen To Microphone button
+   */
   onClickButton(){
 
-    fetch('http://localhost:3002/api/tone/token')
-    .then((response)=>{
-      // return response.text();
-      console.log(response);
-    })
-
-
-    /****************************************** */
-
+    //Calls speech to text route for a token
     fetch('http://localhost:3002/api/speech-to-text/token')
     .then((response) =>{
         return response.text();
     }).then((token) => {
 
-      console.log(token)
       var stream = recognizeMic({
           token: token,
           objectMode: true, // send objects instead of text
@@ -50,8 +35,7 @@ class App extends Component {
       stream.on('data',(data) => {
           this.setState({
             text: data.alternatives[0].transcript
-          }
-        )
+          })
       });
       stream.on('error', function(err) {
           console.log(err);
@@ -62,7 +46,7 @@ class App extends Component {
         console.log(error);
     });
 
-
+    // Calls tone analyser route + sends the text on the screen 
     fetch('http://localhost:3002/api/tone/' + this.state.text)
       .then((res) =>{
         console.log("fetched tone");
@@ -72,18 +56,20 @@ class App extends Component {
         console.log(error);
     });
 }
-    render() {
-      return (
-        <div className="App">
-          <header className="App-header">
-            <img src={logo} className="App-logo" alt="logo" />
-            <h1 className="App-title">Welcome to React</h1>
-          </header>
-          <button id="button" onClick={this.onClickButton.bind(this)}>Listen To Microphone</button>
-        <div className="App-Text">{this.state.text}</div> 
-        </div>
-      );
-    }
+
+//Render the HTML template
+  render() {
+    return (
+      <div className="App">
+        <header className="App-header">
+          <img src={logo} className="App-logo" alt="logo" />
+          <h1 className="App-title">Welcome to React</h1>
+        </header>
+        <button id="button" onClick={this.onClickButton.bind(this)}>Listen To Microphone</button>
+      <div className="App-Text">{this.state.text}</div> 
+      </div>
+    );
+  }
 }
 
 export default App;
